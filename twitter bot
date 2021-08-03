@@ -5,7 +5,7 @@ import urllib.request
 import os
 import nasapy
 
-
+# NASA API key
 api_key = "XXXX"
 
 twitter_auth_keys = {
