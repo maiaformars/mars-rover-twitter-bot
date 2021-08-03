@@ -1,0 +1,82 @@
+import tweepy
+import random
+import requests
+import urllib.request
+import os
+import nasapy
+
+
+api_key = "XXXX"
+
+twitter_auth_keys = {
+            "consumer_key": "XXXX",
+            "consumer_secret": "XXXX",
+            "access_token": "XXXX",
+            "access_token_secret": "XXXX"
+        }
+
+auth = tweepy.OAuthHandler(
+            twitter_auth_keys["consumer_key"],
+            twitter_auth_keys["consumer_secret"]
+        )
+auth.set_access_token(
+            twitter_auth_keys["access_token"],
+            twitter_auth_keys["access_token_secret"]
+        )
+api = tweepy.API(auth)
+
+# Checks if directory for saving images to exists, creates one if not
+image_dir = "./Astro_Images"
+dir_res = os.path.exists(image_dir)
+if dir_res is False:
+    os.makedirs(image_dir)
+
+# Randomly picks a rover to query by
+rover = random.choice(["curiosity", "opportunity", "spirit", "perseverance"])
+if rover == "curiosity" or rover == "opportunity" or rover == "spirit":
+    # Randomly picks a Martian sol and camera to query by
+    sol_1 = random.randrange(2001)
+    nasa = nasapy.Nasa(key=api_key)
+    camera_1 = random.choice(["FHAZ", "RHAZ", "NAVCAM"])
+    roverpic = nasa.mars_rover(sol=sol_1, camera=camera_1, rover=rover)
+    title = "sol_" + str(sol_1) + "_" + rover + "_" + camera_1 + ".jpg"
+    # Tweets a message if no image is available
+    if len(roverpic) == 0:
+        tweet = "No image from " + rover + " " + camera_1 + " available from sol " + str(sol_1)
+        status = api.update_status(status=tweet)
+    # Otherwise, randomly picks an image from the list, tweets it and a description
+    else:
+        urllib.request.urlretrieve(roverpic[0]["img_src"], filename=os.path.join(image_dir, title))
+        image = api.media_upload(filename=os.path.join(image_dir, title))
+        random_pic = random.choice(roverpic)
+        index = roverpic.index(random_pic)
+        tweet = "Taken by " + roverpic[index]["rover"]["name"] + " on " + roverpic[index]["earth_date"] + " with " + \
+                roverpic[index]["camera"]["full_name"]
+        status = api.update_status(status=tweet, media_ids=[image.media_id])
+
+# When Perseverance is the chosen rover
+else:
+    def fetchpercy():
+        mrp_url = "https://api.nasa.gov/mars-photos/api/v1/rovers/"
+        # Randomly picks a Martian sol and camera to query by
+        sol_2 = str(random.randrange(121))
+        rover = "perseverance"
+        camera_2 = random.choice(["navcam_left", "mcz_right", "mcz_left", "rear_hazcam_right"])
+        mrp_url = mrp_url + rover + "/photos?api_key=" + api_key + "&sol=" + sol_2
+        mrp_url = mrp_url + "&camera=" + camera_2
+        response = requests.get(mrp_url).json()
+        title = "sol_" + str(sol_2) + "_" + rover + "_" + camera_2 + ".jpg"
+        # Tweets a message if no image is available
+        if len(response["photos"]) == 0:
+            tweet = "No image from " + rover + " " + camera_2 + " available from sol " + str(sol_2)
+            status = api.update_status(status=tweet)
+        # Otherwise, randomly picks an image from the list, tweets it and a description
+        else:
+            urllib.request.urlretrieve(response["photos"][0]["img_src"], filename=os.path.join(image_dir, title))
+            image = api.media_upload(filename=os.path.join(image_dir, title))
+            random_pic = random.choice(response["photos"])
+            index = response["photos"].index(random_pic)
+            tweet = "Taken by Perseverance on " + response["photos"][index]["earth_date"] + " with " + \
+                    response["photos"][index]["camera"]["full_name"]
+            status = api.update_status(status=tweet, media_ids=[image.media_id])
+    fetchpercy()
