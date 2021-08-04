@@ -46,10 +46,10 @@ if rover == "curiosity" or rover == "opportunity" or rover == "spirit":
         status = api.update_status(status=tweet)
     # Otherwise, randomly picks an image from the list, tweets it and a description
     else:
-        urllib.request.urlretrieve(roverpic[0]["img_src"], filename=os.path.join(image_dir, title))
-        image = api.media_upload(filename=os.path.join(image_dir, title))
         random_pic = random.choice(roverpic)
         index = roverpic.index(random_pic)
+        urllib.request.urlretrieve(roverpic[index]["img_src"], filename=os.path.join(image_dir, title))
+        image = api.media_upload(filename=os.path.join(image_dir, title))
         tweet = "Taken by " + roverpic[index]["rover"]["name"] + " on " + roverpic[index]["earth_date"] + " with " + \
                 roverpic[index]["camera"]["full_name"]
         status = api.update_status(status=tweet, media_ids=[image.media_id])
@@ -72,10 +72,10 @@ else:
             status = api.update_status(status=tweet)
         # Otherwise, randomly picks an image from the list, tweets it and a description
         else:
-            urllib.request.urlretrieve(response["photos"][0]["img_src"], filename=os.path.join(image_dir, title))
-            image = api.media_upload(filename=os.path.join(image_dir, title))
             random_pic = random.choice(response["photos"])
             index = response["photos"].index(random_pic)
+            urllib.request.urlretrieve(response["photos"][index]["img_src"], filename=os.path.join(image_dir, title))
+            image = api.media_upload(filename=os.path.join(image_dir, title))
             tweet = "Taken by Perseverance on " + response["photos"][index]["earth_date"] + " with " + \
                     response["photos"][index]["camera"]["full_name"]
             status = api.update_status(status=tweet, media_ids=[image.media_id])
